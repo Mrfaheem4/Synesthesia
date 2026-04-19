@@ -119,6 +119,7 @@ export function useAudioEngine() {
     ready,
     playing,
     handleFile,
+    bandsRef,
     play,
     pause,
   };
