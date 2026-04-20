@@ -18,65 +18,11 @@ const BAND_SEGMENTS = [
   { key: "air", from: 0.8, to: 1.0 },
 ];
 
-// ── Random circles ──────────────────────────────────────────────────────────
-let circles = [];
-let lastCircleSpawn = 0;
-
 function randBetween(a, b) {
   return a + Math.random() * (b - a);
 }
 
-function spawnCircle(W, H, bands) {
-  const keys = BAND_KEYS.filter((k) => (bands[k] ?? 0) > 0.1);
-  if (keys.length === 0) return null;
-
-  const key = keys[Math.floor(Math.random() * keys.length)];
-  const energy = bands[key] ?? 0;
-
-  return {
-    x: randBetween(W * 0.1, W * 0.9),
-    y: randBetween(H * 0.1, H * 0.9),
-    r: randBetween(15, 45) * (0.5 + energy * 0.8),
-    key,
-    life: 1.0,
-    decay: randBetween(0.008, 0.015),
-  };
-}
-
-function drawCircle(ctx, c) {
-  if (c.life < 0.01) return;
-
-  const rgb = BAND_COLORS[c.key];
-  const alpha = c.life * (0.15 + 0.2 * (1 - c.life));
-
-  ctx.beginPath();
-  ctx.arc(c.x, c.y, c.r, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(${rgb}, ${alpha})`;
-  ctx.fill();
-
-  // Optional subtle outline
-  ctx.strokeStyle = `rgba(${rgb}, ${alpha * 0.6})`;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  c.life -= c.decay;
-}
-
 export function drawBars(ctx, W, H, bands, playing, time) {
-  if (!playing) {
-    circles = circles.map((c) => ({ ...c, life: c.life * 0.9 }));
-  } else {
-    // Spawn new circles periodically
-    const now = time * 1000;
-    if (now - lastCircleSpawn > 400) {
-      const newCircle = spawnCircle(W, H, bands);
-      if (newCircle) {
-        circles.push(newCircle);
-        lastCircleSpawn = now;
-      }
-    }
-  }
-
   ctx.save();
   ctx.globalCompositeOperation = "screen";
 
@@ -113,10 +59,6 @@ export function drawBars(ctx, W, H, bands, playing, time) {
       ctx.fillRect(x + gap / 2, finalY, barW - gap, finalH);
     }
   });
-
-  // Draw circles
-  circles.forEach((c) => drawCircle(ctx, c));
-  circles = circles.filter((c) => c.life > 0.01).slice(-15);
 
   ctx.restore();
 }

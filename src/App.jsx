@@ -1,8 +1,12 @@
-import { useRef } from "react";
+import { useState } from "react";
 import { useAudioEngine } from "./audioEngine";
 import SingleCanvas from "./canvas/SingleCanvas";
+import Landing from "./Landing";
+import PlayerPill from "./PlayerPill";
 
 export default function App() {
+  const [phase, setPhase] = useState("landing");
+
   const {
     analyserRef,
     bandsRef,
@@ -13,112 +17,71 @@ export default function App() {
     handleFile,
     play,
     pause,
+    stop,
+    getProgress,
   } = useAudioEngine();
+
+  async function enterVisualizer(file) {
+    await handleFile(file);
+    setPhase("visualizer");
+  }
+
+  function goBack() {
+    stop();
+    setPhase("landing");
+  }
+
+  if (phase === "landing") {
+    return <Landing onEnter={enterVisualizer} />;
+  }
 
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "#0d0010",
-        fontFamily: "monospace",
+        background: "#080008",
+        overflow: "hidden",
       }}
     >
+      {/* font import */}
+      <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Cormorant+Garamond:ital,wght@1,300&display=swap');
+    `}</style>
+
+      <div
+        style={{
+          position: "fixed",
+          top: 28,
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 100,
+          pointerEvents: "none",
+          fontFamily: "'Syncopate', sans-serif",
+          fontSize: "clamp(11px, 1.2vw, 13px)",
+          fontWeight: 700,
+          letterSpacing: "0.4em",
+          color: "rgba(255,255,255,0.15)",
+          whiteSpace: "nowrap",
+        }}
+      >
+        SYN<span style={{ color: "rgba(255,61,154,0.4)" }}>Æ</span>STHESIA
+      </div>
       <SingleCanvas
         bandsRef={bandsRef}
         analyserRef={analyserRef}
         playing={playing}
       />
 
-      {/* upload */}
-      {!ready && (
-        <div
-          style={{
-            position: "absolute",
-            inset: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10,
-          }}
-        >
-          <label
-            style={{
-              border: "1px dashed #3d1060",
-              borderRadius: 12,
-              padding: "40px 72px",
-              cursor: "pointer",
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 14, color: "#6b3d9a", marginBottom: 6 }}>
-              drop mp3 or click to upload
-            </div>
-            <div style={{ fontSize: 11, color: "#3d1060" }}>
-              mp3 · wav · ogg
-            </div>
-            <input
-              type="file"
-              accept="audio/*"
-              style={{ display: "none" }}
-              onChange={(e) =>
-                e.target.files[0] && handleFile(e.target.files[0])
-              }
-            />
-          </label>
-        </div>
-      )}
-
-      {/* controls */}
       {ready && (
-        <div
-          style={{
-            position: "absolute",
-            bottom: 40,
-            left: "50%",
-            transform: "translateX(-50%)",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            gap: 12,
-            zIndex: 10,
-          }}
-        >
-          <div
-            style={{ fontSize: 11, color: "#6b3d9a", letterSpacing: "0.08em" }}
-          >
-            {trackInfo.name}
-          </div>
-          <button
-            onClick={playing ? pause : play}
-            style={{
-              background: "rgba(107, 0, 255, 0.15)",
-              border: "1px solid rgba(107, 0, 255, 0.3)",
-              color: "#c13dff",
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              cursor: "pointer",
-              fontSize: 18,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {playing ? "⏸" : "▶"}
-          </button>
-          <label style={{ fontSize: 10, color: "#3d1060", cursor: "pointer" }}>
-            change file
-            <input
-              type="file"
-              accept="audio/*"
-              style={{ display: "none" }}
-              onChange={(e) =>
-                e.target.files[0] && handleFile(e.target.files[0])
-              }
-            />
-          </label>
-        </div>
+        <PlayerPill
+          playing={playing}
+          onPlay={play}
+          onPause={pause}
+          onBack={goBack}
+          trackName={trackInfo?.name}
+          getProgress={getProgress}
+        />
       )}
     </div>
   );
